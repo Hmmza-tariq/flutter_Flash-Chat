@@ -42,7 +42,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   void _initBannerAD() {
-    const adUnitId = 'ca-app-pub-8875342677218505/5162157688';
+    const adUnitId = 'Deleted';
     _bannerAd = BannerAd(
         size: AdSize.banner,
         adUnitId: adUnitId,
