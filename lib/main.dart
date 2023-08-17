@@ -11,11 +11,7 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   MobileAds.instance.initialize();
- /* List<String> testDeviceIds = ("33BE2250B43518CCDA7DE426D04EE231") as List<String>;
 
-  RequestConfiguration configuration =
-  RequestConfiguration(testDeviceIds: testDeviceIds);
-  MobileAds.instance.updateRequestConfiguration(configuration);*/
   runApp(FlashChat());
 }
 
