@@ -1,0 +1,351 @@
+import 'package:flutter/material.dart';
+
+import '../Components/SmollButton.dart';
+
+class Assessment {
+  int id;
+  int totalMarks;
+  int obtainedMarks;
+
+  Assessment({
+    required this.id,
+    required this.totalMarks,
+    required this.obtainedMarks,
+  });
+}
+
+
+class AbsoluteCalcScreen extends StatefulWidget {
+  static String id = "AbsoluteCalc_Screen";
+
+  @override
+  _AbsoluteCalcScreenState createState() => _AbsoluteCalcScreenState();
+}
+
+class _AbsoluteCalcScreenState extends State<AbsoluteCalcScreen> {
+  List<Assessment> quizzes = [];
+  List<Assessment> assignments = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text("Absolutes Calculator "),
+        ),
+        body: Row(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: quizzes.length,
+                itemBuilder: (context, index) {
+                  return AssessmentWidget(
+                    assessment: quizzes[index],
+                    type: 'quiz',
+                    number: index + 1,
+                    isLeft: true,
+                    isQuiz: true,
+                  );
+                },
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: assignments.length,
+                itemBuilder: (context, index) {
+                  return AssessmentWidget(
+                    assessment: assignments[index],
+                    type: 'assignment',
+                    number: index + 1,
+                    isLeft: false,
+                    isQuiz: false,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: SafeArea(
+          child: Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SmollButton(
+                  title: 'Quiz',
+                  color: Colors.lightBlue,
+                  onPRESS: () {
+                    _showAddAssessmentDialog(context, true);
+                  },
+                ),
+                SmollButton(
+                  title: 'Assignment',
+                  color: Colors.lightBlue,
+                  onPRESS: () {
+                    _showAddAssessmentDialog(context, false);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  int _nextAssessmentId = 0;
+
+  void _showAddAssessmentDialog(BuildContext context, bool isQuiz) {
+    TextEditingController totalMarksController = TextEditingController();
+    TextEditingController obtainedMarksController = TextEditingController();
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: isQuiz ? const Text("Add Quiz") : const Text("Add Assignment"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: totalMarksController,
+                  decoration: const InputDecoration(hintText: "Total Marks"),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: obtainedMarksController,
+                  decoration: const InputDecoration(hintText: "Obtained Marks"),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  int totalMarks = int.tryParse(totalMarksController.text) ?? 0;
+                  int obtainedMarks = int.tryParse(obtainedMarksController.text) ?? 0;
+
+                  if (obtainedMarks > totalMarks) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Obtained marks cannot be greater than total marks.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  Assessment ass = Assessment(
+                    id: _nextAssessmentId++, // assign a unique ID
+                    totalMarks: totalMarks,
+                    obtainedMarks: obtainedMarks,
+                  );
+                  setState(() {
+                    isQuiz ? quizzes.add(ass) : assignments.add(ass);
+                  });
+                  Navigator.pop(context);
+                },
+                child: const Text("Add"),
+              ),
+            ],
+          );
+        });
+  }
+}
+
+class AssessmentWidget extends StatefulWidget {
+  final Assessment assessment;
+  final String type;
+  final int number;
+  final bool isLeft;
+  final bool isQuiz;
+
+  const AssessmentWidget({
+    Key? key,
+    required this.assessment,
+    required this.type,
+    required this.number,
+    required this.isLeft,
+    required this.isQuiz,
+  }) : super(key: key);
+
+  @override
+  State<AssessmentWidget> createState() => _AssessmentWidgetState();
+}
+
+class _AssessmentWidgetState extends State<AssessmentWidget> {
+
+  @override
+  Widget build(BuildContext context) {
+    String assessment = widget.isQuiz? "Quiz" : "Assignment";
+    return Dismissible(
+      key: Key(widget.assessment.id.toString()),
+      onDismissed: (direction) {
+        // Perform the delete operation here.
+      },
+      background: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16.0),
+        child: const Icon(
+          Icons.delete,
+          color: Colors.white,
+        ),
+      ),
+      child: GestureDetector(
+        onTap: () {
+          _showEditAssessmentDialog(context, widget.isQuiz, widget.assessment);
+        },
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "${widget.type} ${widget.number}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.0,
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "${widget.assessment.obtainedMarks}/${widget.assessment.totalMarks}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11.0,
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+                    Text(
+                      "${(widget.assessment.obtainedMarks / widget.assessment.totalMarks * 100).toStringAsFixed(2)}%",
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 10.0,
+                      ),
+                    ),
+                  ],
+                ),
+                const Icon(
+                  Icons.edit,
+                  color: Colors.black45,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditAssessmentDialog(
+      BuildContext context, bool isQuiz, Assessment assessment) {
+    TextEditingController totalMarksController =
+        TextEditingController(text: assessment.totalMarks.toString());
+    TextEditingController obtainedMarksController =
+        TextEditingController(text: assessment.obtainedMarks.toString());
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: isQuiz
+                ? const Text("Edit Quiz")
+                : const Text("Edit Assignment"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: totalMarksController,
+                  decoration: const InputDecoration(hintText: "Total Marks"),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: obtainedMarksController,
+                  decoration: const InputDecoration(hintText: "Obtained Marks"),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  int totalMarks = int.tryParse(totalMarksController.text) ?? 0;
+                  int obtainedMarks =
+                      int.tryParse(obtainedMarksController.text) ?? 0;
+
+                  if (obtainedMarks > totalMarks) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Obtained marks cannot be greater than total marks.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  assessment.totalMarks = totalMarks;
+                  assessment.obtainedMarks = obtainedMarks;
+
+                  setState(() {});
+
+                  Navigator.pop(context);
+                },
+                child: const Text("Save"),
+              ),
+            ],
+          );
+        });
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// BoxDecoration
+          // child: TextField(
+          //   onSubmitted: (value) {
+          //     url = Uri.parse(value);
+          //     if (url.scheme.isEmpty) {
+          //       url = Uri.parse("${initialUrl}search?q=$value");
+          //     }
+          //     webViewController!.loadUrl(urlRequest: URLRequest(url: url));
+          //     ;
+          //   },
+          //   textAlign: TextAlign.center,
+          //   controller: urlController,
+          //   decoration: const InputDecoration(
+          //     hintText: "eg. LMS",
+          //     prefixIcon: Icon(Icons.search),
+          //   ), // InputDecoration
+          // ), // TextField
